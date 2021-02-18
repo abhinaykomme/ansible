@@ -1,0 +1,39 @@
+- name : creating a db layer
+  hosts : DB
+  become : yes
+  tags :
+    - MARIADB
+  tasks :
+    - name : install maria db
+      yum :
+        name : ['mariadb', 'mariadb-server', 'MySQL-python']
+        state : latest 
+
+    - name : start mariadb
+      service :
+        name : mariadb
+        state : started
+
+    - name : creating the student.sql file
+      blockinfile :
+        path : /tmp/student.sql
+        block : |
+          create database if not exists studentapp;
+          use studentapp;
+          CREATE TABLE if not exists Students(student_id INT NOT NULL AUTO_INCREMENT,
+          student_name VARCHAR(100) NOT NULL,
+          student_addr VARCHAR(100) NOT NULL,
+          student_age VARCHAR(3) NOT NULL,
+          student_qual VARCHAR(20) NOT NULL,
+          student_percent VARCHAR(10) NOT NULL,
+          student_year_passed VARCHAR(10) NOT NULL,
+          PRIMARY KEY (student_id)
+          );
+          grant all privileges on studentapp.* to 'student'@'localhost' identified by 'student@1';
+        create : yes
+
+    - name : run the sql file
+      mysql_db :
+        state : import
+        name : all
+        target : /tmp/student.sql
